@@ -1,0 +1,257 @@
+{
+  "entities": {
+    "UserVaultProfile": {
+      "title": "UserVaultProfile",
+      "description": "Owner account root document anchoring Nova cloud sync collections.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 120
+        },
+        "autoSync": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "autoSync", "createdAt", "updatedAt"]
+    },
+    "SyncedTask": {
+      "title": "SyncedTask",
+      "description": "Productivity and wellness task reconciled between local storage and Firestore.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "dueTime": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+        "category": { "type": "string", "enum": ["work", "personal", "alarm", "health"] },
+        "completed": { "type": "boolean" },
+        "proactiveNote": { "type": "string", "minLength": 0, "maxLength": 300 },
+        "updatedAtMs": { "type": "number" },
+        "deleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "title", "dueTime", "priority", "category", "completed", "updatedAtMs", "deleted", "createdAt", "updatedAt"]
+    },
+    "SyncedAlarm": {
+      "title": "SyncedAlarm",
+      "description": "Mobile alarm reconciled between local storage and Firestore.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "time24": { "type": "string", "minLength": 5, "maxLength": 5, "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "enabled": { "type": "boolean" },
+        "repeatDays": { "type": "array", "maxLength": 7 },
+        "lastTriggeredDate": { "type": "string", "minLength": 0, "maxLength": 16 },
+        "updatedAtMs": { "type": "number" },
+        "deleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "time24", "label", "enabled", "repeatDays", "updatedAtMs", "deleted", "createdAt", "updatedAt"]
+    },
+    "SyncedIndexedFile": {
+      "title": "SyncedIndexedFile",
+      "description": "Indexed file, PDF, note, contact, or artwork record reconciled with Firestore.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "subtitle": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "type": { "type": "string", "enum": ["app", "file", "contact", "note", "setting", "pdf", "image"] },
+        "sizeOrMeta": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "updatedAtLabel": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "contentPreview": { "type": "string", "minLength": 0, "maxLength": 500 },
+        "updatedAtMs": { "type": "number" },
+        "deleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "title", "subtitle", "type", "sizeOrMeta", "updatedAtLabel", "updatedAtMs", "deleted", "createdAt", "updatedAt"]
+    },
+    "SyncedProject": {
+      "title": "SyncedProject",
+      "description": "Isolated NOVA AI project workspace with instructions and folders.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "description": { "type": "string", "minLength": 0, "maxLength": 400 },
+        "instructions": { "type": "string", "minLength": 0, "maxLength": 4000 },
+        "archived": { "type": "boolean" },
+        "folders": { "type": "array", "maxLength": 20 },
+        "updatedAtMs": { "type": "number" },
+        "deleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "name", "archived", "folders", "updatedAtMs", "deleted", "createdAt", "updatedAt"]
+    },
+    "SyncedMemory": {
+      "title": "SyncedMemory",
+      "description": "User-approved general or project-scoped memory entry.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "scope": { "type": "string", "enum": ["general", "project"] },
+        "projectId": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "category": { "type": "string", "enum": ["preference", "fact", "workflow", "project"] },
+        "content": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "approved": { "type": "boolean" },
+        "active": { "type": "boolean" },
+        "updatedAtMs": { "type": "number" },
+        "deleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "scope", "category", "content", "approved", "active", "updatedAtMs", "deleted", "createdAt", "updatedAt"]
+    },
+    "SyncedSkill": {
+      "title": "SyncedSkill",
+      "description": "Custom reusable NOVA AI skill instructions and triggers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "instructions": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "triggers": { "type": "array", "maxLength": 16 },
+        "autoDetect": { "type": "boolean" },
+        "enabled": { "type": "boolean" },
+        "updatedAtMs": { "type": "number" },
+        "deleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "name", "description", "instructions", "triggers", "autoDetect", "enabled", "updatedAtMs", "deleted", "createdAt", "updatedAt"]
+    },
+    "SyncedArtifact": {
+      "title": "SyncedArtifact",
+      "description": "NOVA Studio generated web/React/dashboard artifact record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "projectId": { "type": "string", "minLength": 0, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "kind": { "type": "string", "enum": ["html", "react", "dashboard", "diagram"] },
+        "summary": { "type": "string", "minLength": 0, "maxLength": 500 },
+        "currentCode": { "type": "string", "minLength": 1, "maxLength": 150000 },
+        "versionCount": { "type": "number" },
+        "updatedAtMs": { "type": "number" },
+        "deleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "title", "kind", "currentCode", "versionCount", "updatedAtMs", "deleted", "createdAt", "updatedAt"]
+    },
+    "SyncedLanguageProgress": {
+      "title": "SyncedLanguageProgress",
+      "description": "Per-language user learning progress, XP, streak, level, and unlocked units.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "targetLanguage": { "type": "string", "enum": ["ja", "en", "ko", "fr", "de", "es", "zh", "it", "pt", "hi", "ta"] },
+        "nativeLanguage": { "type": "string", "enum": ["ja", "en", "ko", "fr", "de", "es", "zh", "it", "pt", "hi", "ta"] },
+        "level": { "type": "string", "enum": ["Absolute Beginner", "Beginner", "Elementary", "Intermediate", "Upper Intermediate", "Advanced"] },
+        "levelSelected": { "type": "boolean" },
+        "xp": { "type": "number" },
+        "dailyXp": { "type": "number" },
+        "dailyGoalXp": { "type": "number" },
+        "streakDays": { "type": "number" },
+        "lastActiveDate": { "type": "string", "minLength": 1, "maxLength": 16 },
+        "hearts": { "type": "number" },
+        "practiceUnlimitedHearts": { "type": "boolean" },
+        "completedLessonIds": { "type": "array", "maxLength": 500 },
+        "completedCheckpointIds": { "type": "array", "maxLength": 100 },
+        "unlockedUnitNumbers": { "type": "array", "maxLength": 50 },
+        "updatedAtMs": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "targetLanguage",
+        "nativeLanguage",
+        "level",
+        "levelSelected",
+        "xp",
+        "dailyXp",
+        "dailyGoalXp",
+        "streakDays",
+        "lastActiveDate",
+        "hearts",
+        "practiceUnlimitedHearts",
+        "completedLessonIds",
+        "completedCheckpointIds",
+        "unlockedUnitNumbers",
+        "updatedAtMs",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserVaultProfile" },
+      "description": "Root user vault document holding auto-sync metadata."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/SyncedTask" },
+      "description": "Synchronized tasks belonging to the signed-in user."
+    },
+    "/users/{userId}/alarms/{alarmId}": {
+      "schema": { "$ref": "#/entities/SyncedAlarm" },
+      "description": "Synchronized alarms belonging to the signed-in user."
+    },
+    "/users/{userId}/indexedFiles/{fileId}": {
+      "schema": { "$ref": "#/entities/SyncedIndexedFile" },
+      "description": "Synchronized indexed files belonging to the signed-in user."
+    },
+    "/users/{userId}/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/SyncedProject" },
+      "description": "Isolated AI project workspaces belonging to the signed-in user."
+    },
+    "/users/{userId}/memories/{memoryId}": {
+      "schema": { "$ref": "#/entities/SyncedMemory" },
+      "description": "User-approved general and project-scoped memories."
+    },
+    "/users/{userId}/skills/{skillId}": {
+      "schema": { "$ref": "#/entities/SyncedSkill" },
+      "description": "Custom NOVA AI skills belonging to the signed-in user."
+    },
+    "/users/{userId}/artifacts/{artifactId}": {
+      "schema": { "$ref": "#/entities/SyncedArtifact" },
+      "description": "NOVA Studio AI artifacts belonging to the signed-in user."
+    },
+    "/users/{userId}/languageProgress/{langId}": {
+      "schema": { "$ref": "#/entities/SyncedLanguageProgress" },
+      "description": "Per-language learning progress, XP, streak, level, and unlocked units belonging to the signed-in user."
+    }
+  }
+}

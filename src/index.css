@@ -1,0 +1,146 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --nova-bg: #F6F5FB;
+    --nova-surface: #FFFFFF;
+    --nova-surface-elevated: #F1EEF9;
+    --nova-text: #151026;
+    --nova-muted: #5A5272;
+    --nova-border: rgba(109, 40, 217, 0.14);
+  }
+
+  .dark {
+    color-scheme: dark;
+    --nova-bg: #06040C;
+    --nova-surface: #120D1F;
+    --nova-surface-elevated: #181228;
+    --nova-text: #F4F1FA;
+    --nova-muted: #94A3B8;
+    --nova-border: rgba(167, 139, 250, 0.15);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--nova-bg);
+    color: var(--nova-text);
+    overflow-x: hidden;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+/* Semantic surface utilities supporting both Nova Obsidian Dark and Clean Daylight themes cleanly */
+.nova-shell-bg {
+  background-color: var(--nova-bg);
+  color: var(--nova-text);
+}
+
+.nova-card {
+  background-color: var(--nova-surface);
+  border-color: var(--nova-border);
+}
+
+.nova-subcard {
+  background-color: var(--nova-surface-elevated);
+}
+
+/* Smooth GPU-composited orbital revolutions for Nova's planetary rings */
+@keyframes nova-orbit-cw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes nova-orbit-ccw {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes nova-core-breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.72;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+.nova-ring-spin-cw {
+  animation: nova-orbit-cw 3.6s linear infinite;
+  will-change: transform;
+}
+
+.nova-ring-spin-ccw {
+  animation: nova-orbit-ccw 5.2s linear infinite;
+  will-change: transform;
+}
+
+.nova-ring-spin-fast {
+  animation: nova-orbit-cw 1.9s linear infinite;
+  will-change: transform;
+}
+
+.nova-ring-idle {
+  animation: nova-orbit-cw 28s linear infinite;
+  will-change: transform;
+}
+
+.nova-core-breathe {
+  animation: nova-core-breathe 2.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-ring-spin-cw,
+  .nova-ring-spin-ccw,
+  .nova-ring-spin-fast,
+  .nova-ring-idle,
+  .nova-core-breathe {
+    animation: none !important;
+  }
+}
+
+.pb-safe {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle obsidian purple scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.28);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.45);
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "aud-1795288009677-i92k",
+    "timestamp": "07:06:49 PM",
+    "timestampMs": 1795288009677,
+    "module": "computer",
+    "action": "inspect_workspace",
+    "actor": "user",
+    "outcome": "executed",
+    "details": "Inspected package.json"
+  },
+  {
+    "id": "aud-1795288009650-izyk",
+    "timestamp": "07:06:49 PM",
+    "timestampMs": 1795288009650,
+    "module": "code",
+    "action": "terminal:typecheck",
+    "actor": "user",
+    "outcome": "executed",
+    "details": "TypeScript Typecheck (npm run lint) exited with 0 (1859ms)"
+  },
+  {
+    "id": "aud-1795287992366-q4yt",
+    "timestamp": "07:06:32 PM",
+    "timestampMs": 1795287992366,
+    "module": "scheduler",
+    "action": "run:task_reminder",
+    "actor": "nova-scheduler-daemon",
+    "outcome": "executed",
+    "details": "VerifyJob -> Reminder triggered: VerifyJob — Ping verification"
+  },
+  {
+    "id": "aud-1795287992355-1zug",
+    "timestamp": "07:06:32 PM",
+    "timestampMs": 1795287992355,
+    "module": "scheduler",
+    "action": "create_job",
+    "actor": "user",
+    "outcome": "executed",
+    "details": "VerifyJob (once)"
+  },
+  {
+    "id": "aud-1795287992348-ekj1",
+    "timestamp": "07:06:32 PM",
+    "timestampMs": 1795287992348,
+    "module": "connect",
+    "action": "delete_connector",
+    "actor": "user",
+    "outcome": "executed",
+    "details": "Removed connector conn-1795287992337-iwzt"
+  },
+  {
+    "id": "aud-1795287992339-ut5i",
+    "timestamp": "07:06:32 PM",
+    "timestampMs": 1795287992339,
+    "module": "connect",
+    "action": "save_connector",
+    "actor": "user",
+    "outcome": "executed",
+    "details": "rest_api:Verify Connector (encrypted token stored)"
+  }
+]

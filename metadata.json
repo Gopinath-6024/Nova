@@ -1,0 +1,6 @@
+{
+  "name": "Nova",
+  "description": "Multilingual AI assistant with voice & fingerprint phone control, proactive task management, universal search, and mobile security.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

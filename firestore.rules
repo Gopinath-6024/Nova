@@ -1,0 +1,519 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function parentVaultExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function isValidUserVaultProfile(data, userId) {
+      return data.keys().hasAll(['ownerId', 'autoSync', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'displayName', 'autoSync', 'createdAt', 'updatedAt'])
+        && data.ownerId is string
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 120))
+        && data.autoSync is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSyncedTask(data, userId, taskId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'title', 'dueTime', 'priority',
+          'category', 'completed', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'title', 'dueTime', 'priority',
+          'category', 'completed', 'proactiveNote', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string
+        && isValidId(data.id)
+        && data.id == taskId
+        && data.ownerId is string
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 240
+        && data.dueTime is string && data.dueTime.size() >= 1 && data.dueTime.size() <= 80
+        && data.priority in ['high', 'medium', 'low']
+        && data.category in ['work', 'personal', 'alarm', 'health']
+        && data.completed is bool
+        && (!('proactiveNote' in data) || (data.proactiveNote is string && data.proactiveNote.size() <= 300))
+        && (data.updatedAtMs is int || data.updatedAtMs is float)
+        && data.updatedAtMs >= 0
+        && data.deleted is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSyncedAlarm(data, userId, alarmId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'time24', 'label', 'enabled',
+          'repeatDays', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'time24', 'label', 'enabled',
+          'repeatDays', 'lastTriggeredDate', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string
+        && isValidId(data.id)
+        && data.id == alarmId
+        && data.ownerId is string
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.time24 is string
+        && data.time24.size() == 5
+        && data.time24.matches('^([01]\\d|2[0-3]):[0-5]\\d$')
+        && data.label is string && data.label.size() >= 1 && data.label.size() <= 120
+        && data.enabled is bool
+        && data.repeatDays is list
+        && data.repeatDays.size() >= 1
+        && data.repeatDays.size() <= 7
+        && data.repeatDays[0] is string
+        && data.repeatDays[0].size() <= 16
+        && data.repeatDays.hasOnly(['Daily', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Weekdays', 'Weekends'])
+        && (!('lastTriggeredDate' in data) || (data.lastTriggeredDate is string && data.lastTriggeredDate.size() <= 16))
+        && (data.updatedAtMs is int || data.updatedAtMs is float)
+        && data.updatedAtMs >= 0
+        && data.deleted is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSyncedIndexedFile(data, userId, fileId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'title', 'subtitle', 'type',
+          'sizeOrMeta', 'updatedAtLabel', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'title', 'subtitle', 'type',
+          'sizeOrMeta', 'updatedAtLabel', 'contentPreview', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string
+        && isValidId(data.id)
+        && data.id == fileId
+        && data.ownerId is string
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.subtitle is string && data.subtitle.size() >= 1 && data.subtitle.size() <= 240
+        && data.type in ['app', 'file', 'contact', 'note', 'setting', 'pdf', 'image']
+        && data.sizeOrMeta is string && data.sizeOrMeta.size() >= 1 && data.sizeOrMeta.size() <= 64
+        && data.updatedAtLabel is string && data.updatedAtLabel.size() >= 1 && data.updatedAtLabel.size() <= 64
+        && (!('contentPreview' in data) || (data.contentPreview is string && data.contentPreview.size() <= 500))
+        && (data.updatedAtMs is int || data.updatedAtMs is float)
+        && data.updatedAtMs >= 0
+        && data.deleted is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSyncedProject(data, userId, projectId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'name', 'archived', 'folders',
+          'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'name', 'description', 'instructions', 'archived',
+          'folders', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string && isValidId(data.id) && data.id == projectId
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == userId && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && (!('description' in data) || (data.description is string && data.description.size() <= 400))
+        && (!('instructions' in data) || (data.instructions is string && data.instructions.size() <= 4000))
+        && data.archived is bool
+        && data.folders is list && data.folders.size() <= 20
+        && (data.folders.size() == 0 || (data.folders[0] is string && data.folders[0].size() <= 64))
+        && (data.updatedAtMs is int || data.updatedAtMs is float) && data.updatedAtMs >= 0
+        && data.deleted is bool
+        && data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    function isValidSyncedMemory(data, userId, memoryId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'scope', 'category', 'content',
+          'approved', 'active', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'scope', 'projectId', 'category', 'content',
+          'approved', 'active', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string && isValidId(data.id) && data.id == memoryId
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == userId && data.ownerId == request.auth.uid
+        && data.scope in ['general', 'project']
+        && (!('projectId' in data) || (data.projectId is string && data.projectId.size() <= 128))
+        && data.category in ['preference', 'fact', 'workflow', 'project']
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 1000
+        && data.approved is bool && data.active is bool
+        && (data.updatedAtMs is int || data.updatedAtMs is float) && data.updatedAtMs >= 0
+        && data.deleted is bool
+        && data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    function isValidSyncedSkill(data, userId, skillId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'name', 'description', 'instructions',
+          'triggers', 'autoDetect', 'enabled', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'name', 'description', 'instructions',
+          'triggers', 'autoDetect', 'enabled', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string && isValidId(data.id) && data.id == skillId
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == userId && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.description is string && data.description.size() >= 1 && data.description.size() <= 300
+        && data.instructions is string && data.instructions.size() >= 1 && data.instructions.size() <= 4000
+        && data.triggers is list && data.triggers.size() <= 16
+        && (data.triggers.size() == 0 || (data.triggers[0] is string && data.triggers[0].size() <= 48))
+        && data.autoDetect is bool && data.enabled is bool
+        && (data.updatedAtMs is int || data.updatedAtMs is float) && data.updatedAtMs >= 0
+        && data.deleted is bool
+        && data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    function isValidSyncedArtifact(data, userId, artifactId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'title', 'kind', 'currentCode',
+          'versionCount', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'projectId', 'title', 'kind', 'summary', 'currentCode',
+          'versionCount', 'updatedAtMs', 'deleted', 'createdAt', 'updatedAt'
+        ])
+        && data.id is string && isValidId(data.id) && data.id == artifactId
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == userId && data.ownerId == request.auth.uid
+        && (!('projectId' in data) || (data.projectId is string && data.projectId.size() <= 128))
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.kind in ['html', 'react', 'dashboard', 'diagram']
+        && (!('summary' in data) || (data.summary is string && data.summary.size() <= 500))
+        && data.currentCode is string && data.currentCode.size() >= 1 && data.currentCode.size() <= 150000
+        && (data.versionCount is int || data.versionCount is float) && data.versionCount >= 1 && data.versionCount <= 200
+        && (data.updatedAtMs is int || data.updatedAtMs is float) && data.updatedAtMs >= 0
+        && data.deleted is bool
+        && data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    function isValidSyncedLanguageProgress(data, userId, langId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'targetLanguage', 'nativeLanguage', 'level', 'levelSelected',
+          'xp', 'dailyXp', 'dailyGoalXp', 'streakDays', 'lastActiveDate',
+          'hearts', 'practiceUnlimitedHearts', 'completedLessonIds',
+          'completedCheckpointIds', 'unlockedUnitNumbers', 'updatedAtMs',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'targetLanguage', 'nativeLanguage', 'level', 'levelSelected',
+          'xp', 'dailyXp', 'dailyGoalXp', 'streakDays', 'lastActiveDate',
+          'hearts', 'practiceUnlimitedHearts', 'completedLessonIds',
+          'completedCheckpointIds', 'unlockedUnitNumbers', 'updatedAtMs',
+          'createdAt', 'updatedAt'
+        ])
+        && data.id is string && isValidId(data.id) && data.id == langId
+        && data.ownerId is string && isValidId(data.ownerId) && data.ownerId == userId && data.ownerId == request.auth.uid
+        && data.targetLanguage in ['ja', 'en', 'ko', 'fr', 'de', 'es', 'zh', 'it', 'pt', 'hi', 'ta']
+        && data.nativeLanguage in ['ja', 'en', 'ko', 'fr', 'de', 'es', 'zh', 'it', 'pt', 'hi', 'ta']
+        && data.level in ['Absolute Beginner', 'Beginner', 'Elementary', 'Intermediate', 'Upper Intermediate', 'Advanced']
+        && data.levelSelected is bool
+        && (data.xp is int || data.xp is float) && data.xp >= 0 && data.xp <= 10000000
+        && (data.dailyXp is int || data.dailyXp is float) && data.dailyXp >= 0 && data.dailyXp <= 100000
+        && (data.dailyGoalXp is int || data.dailyGoalXp is float) && data.dailyGoalXp >= 10 && data.dailyGoalXp <= 1000
+        && (data.streakDays is int || data.streakDays is float) && data.streakDays >= 0 && data.streakDays <= 100000
+        && data.lastActiveDate is string && data.lastActiveDate.size() >= 1 && data.lastActiveDate.size() <= 16
+        && (data.hearts is int || data.hearts is float) && data.hearts >= 0 && data.hearts <= 10
+        && data.practiceUnlimitedHearts is bool
+        && data.completedLessonIds is list && data.completedLessonIds.size() <= 500
+        && (data.completedLessonIds.size() == 0 || (data.completedLessonIds[0] is string && data.completedLessonIds[0].size() <= 128))
+        && data.completedCheckpointIds is list && data.completedCheckpointIds.size() <= 100
+        && (data.completedCheckpointIds.size() == 0 || (data.completedCheckpointIds[0] is string && data.completedCheckpointIds[0].size() <= 128))
+        && data.unlockedUnitNumbers is list && data.unlockedUnitNumbers.size() <= 50
+        && (data.unlockedUnitNumbers.size() == 0 || (data.unlockedUnitNumbers[0] is int || data.unlockedUnitNumbers[0] is float))
+        && (data.updatedAtMs is int || data.updatedAtMs is float) && data.updatedAtMs >= 0
+        && data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserVaultProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserVaultProfile(incoming(), userId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['autoSync', 'updatedAt'])
+          || incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'autoSync', 'updatedAt'])
+        );
+      allow delete: if false;
+
+      match /tasks/{taskId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(taskId) && parentVaultExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(taskId)
+          && isValidSyncedTask(incoming(), userId, taskId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(taskId)
+          && isValidSyncedTask(incoming(), userId, taskId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().id == existing().id
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId)
+          && (
+            (incoming().deleted == true && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'updatedAtMs', 'updatedAt']))
+            || (incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'updatedAtMs', 'updatedAt']))
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'dueTime', 'priority', 'category', 'completed',
+              'proactiveNote', 'updatedAtMs', 'deleted', 'updatedAt'
+            ])
+          );
+        allow delete: if false;
+      }
+
+      match /alarms/{alarmId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(alarmId) && parentVaultExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(alarmId)
+          && isValidSyncedAlarm(incoming(), userId, alarmId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(alarmId)
+          && isValidSyncedAlarm(incoming(), userId, alarmId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().id == existing().id
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId)
+          && (
+            (incoming().deleted == true && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'updatedAtMs', 'updatedAt']))
+            || (incoming().diff(existing()).affectedKeys().hasOnly(['enabled', 'lastTriggeredDate', 'updatedAtMs', 'updatedAt']))
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'time24', 'label', 'enabled', 'repeatDays', 'lastTriggeredDate',
+              'updatedAtMs', 'deleted', 'updatedAt'
+            ])
+          );
+        allow delete: if false;
+      }
+
+      match /indexedFiles/{fileId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(fileId) && parentVaultExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(fileId)
+          && isValidSyncedIndexedFile(incoming(), userId, fileId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(fileId)
+          && isValidSyncedIndexedFile(incoming(), userId, fileId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().id == existing().id
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId)
+          && (
+            (incoming().deleted == true && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'updatedAtMs', 'updatedAt']))
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'subtitle', 'type', 'sizeOrMeta', 'updatedAtLabel',
+              'contentPreview', 'updatedAtMs', 'deleted', 'updatedAt'
+            ])
+          );
+        allow delete: if false;
+      }
+
+      match /projects/{projectId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(projectId) && parentVaultExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(projectId)
+          && isValidSyncedProject(incoming(), userId, projectId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(projectId)
+          && isValidSyncedProject(incoming(), userId, projectId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().id == existing().id
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId)
+          && (
+            (incoming().deleted == true && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'updatedAtMs', 'updatedAt']))
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'description', 'instructions', 'archived', 'folders', 'updatedAtMs', 'deleted', 'updatedAt'
+            ])
+          );
+        allow delete: if false;
+      }
+
+      match /memories/{memoryId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(memoryId) && parentVaultExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(memoryId)
+          && isValidSyncedMemory(incoming(), userId, memoryId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(memoryId)
+          && isValidSyncedMemory(incoming(), userId, memoryId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().id == existing().id
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId)
+          && (
+            (incoming().deleted == true && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'updatedAtMs', 'updatedAt']))
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'scope', 'projectId', 'category', 'content', 'approved', 'active', 'updatedAtMs', 'deleted', 'updatedAt'
+            ])
+          );
+        allow delete: if false;
+      }
+
+      match /skills/{skillId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(skillId) && parentVaultExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(skillId)
+          && isValidSyncedSkill(incoming(), userId, skillId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(skillId)
+          && isValidSyncedSkill(incoming(), userId, skillId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().id == existing().id
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId)
+          && (
+            (incoming().deleted == true && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'updatedAtMs', 'updatedAt']))
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'name', 'description', 'instructions', 'triggers', 'autoDetect', 'enabled', 'updatedAtMs', 'deleted', 'updatedAt'
+            ])
+          );
+        allow delete: if false;
+      }
+
+      match /artifacts/{artifactId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(artifactId) && parentVaultExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(artifactId)
+          && isValidSyncedArtifact(incoming(), userId, artifactId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(artifactId)
+          && isValidSyncedArtifact(incoming(), userId, artifactId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().id == existing().id
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId)
+          && (
+            (incoming().deleted == true && incoming().diff(existing()).affectedKeys().hasOnly(['deleted', 'updatedAtMs', 'updatedAt']))
+            || incoming().diff(existing()).affectedKeys().hasOnly([
+              'projectId', 'title', 'kind', 'summary', 'currentCode', 'versionCount', 'updatedAtMs', 'deleted', 'updatedAt'
+            ])
+          );
+        allow delete: if false;
+      }
+
+      match /languageProgress/{langId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(langId) && parentVaultExists(userId);
+        allow list: if isOwner(userId) && existing().ownerId == request.auth.uid;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(langId)
+          && isValidSyncedLanguageProgress(incoming(), userId, langId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId);
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(langId)
+          && isValidSyncedLanguageProgress(incoming(), userId, langId)
+          && incoming().ownerId == existing().ownerId
+          && incoming().id == existing().id
+          && incoming().targetLanguage == existing().targetLanguage
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && parentVaultExists(userId)
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'nativeLanguage', 'level', 'levelSelected', 'xp', 'dailyXp',
+            'dailyGoalXp', 'streakDays', 'lastActiveDate', 'hearts',
+            'practiceUnlimitedHearts', 'completedLessonIds', 'completedCheckpointIds',
+            'unlockedUnitNumbers', 'updatedAtMs', 'updatedAt'
+          ]);
+        allow delete: if false;
+      }
+    }
+  }
+}

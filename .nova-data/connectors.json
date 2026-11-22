@@ -1,0 +1,12 @@
+[
+  {
+    "id": "conn-github-default",
+    "name": "GitHub REST Workspace",
+    "kind": "github",
+    "endpointUrl": "https://api.github.com",
+    "description": "Inspect authorized repositories, issues, and commit approved file updates.",
+    "headerName": "Authorization",
+    "permissionMode": "ask",
+    "status": "untested"
+  }
+]
